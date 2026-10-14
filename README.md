@@ -7,6 +7,20 @@ Windows, macOS ve Linux'ta çalışır. Takım arkadaşlarınıza **tek bir dosy
 gönderirsiniz; çift tıklayıp kullanırlar. Python, ffmpeg ya da başka bir şey
 kurmaları gerekmez — hepsi dosyanın içinde.
 
+## İndir
+
+**[→ En son sürümü indir (Releases)](../../releases/latest)**
+
+| İşletim sistemi | Dosya |
+|---|---|
+| Windows 10/11 (64 bit) | `VideoSikistirici-windows-x64.exe` |
+| Mac — Apple Silicon (M1/M2/M3/M4) | `VideoSikistirici-macos-appleSilicon.zip` |
+| Mac — Intel (2020 ve öncesi) | `VideoSikistirici-macos-intel.zip` |
+| Linux (64 bit) | `VideoSikistirici-linux-x64` |
+
+Mac'inizin hangisi olduğundan emin değilseniz:  → Bu Mac Hakkında → "Yonga"
+satırında *Apple* yazıyorsa Apple Silicon, *Intel* yazıyorsa Intel sürümü.
+
 ---
 
 ## Takım arkadaşları için kullanım
