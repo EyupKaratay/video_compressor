@@ -11,6 +11,8 @@ jobs:
   build:
     name: ${{ matrix.label }}
     runs-on: ${{ matrix.os }}
+    # Runner bulunamazsa koşu 6 saat asılı kalmasın.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -24,7 +26,10 @@ jobs:
             label: Windows x64
             artifact: VideoSikistirici-windows-x64
             path: dist/VideoSikistirici.exe
-          - os: macos-13
+          # GitHub macos-13 runner'larini emekliye ayirdi; Intel icin guncel
+          # etiket macos-15-intel. Bu etiket de kalkarsa is kuyrukta kalir ve
+          # asagidaki timeout-minutes ile kendiliginden duser.
+          - os: macos-15-intel
             label: macOS Intel
             artifact: VideoSikistirici-macos-intel
             path: dist/VideoSikistirici-macos.zip
