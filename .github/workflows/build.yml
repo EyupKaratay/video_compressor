@@ -1,0 +1,66 @@
+name: Paketle
+
+# Üç işletim sistemi için de çalıştırılabilir dosyaları üretir.
+# Elle başlatmak için: Actions sekmesi → Paketle → Run workflow
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Eski glibc ile derlenir ki eski Linux dağıtımlarında da çalışsın.
+          - os: ubuntu-22.04
+            label: Linux x64
+            artifact: VideoSikistirici-linux-x64
+            path: dist/VideoSikistirici
+          - os: windows-latest
+            label: Windows x64
+            artifact: VideoSikistirici-windows-x64
+            path: dist/VideoSikistirici.exe
+          - os: macos-13
+            label: macOS Intel
+            artifact: VideoSikistirici-macos-intel
+            path: dist/VideoSikistirici-macos.zip
+          - os: macos-14
+            label: macOS Apple Silicon
+            artifact: VideoSikistirici-macos-arm64
+            path: dist/VideoSikistirici-macos.zip
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Paketle (Linux)
+        if: runner.os == 'Linux'
+        run: bash build/build_linux.sh
+
+      - name: Paketle (macOS)
+        if: runner.os == 'macOS'
+        env:
+          ASSUME_YES: "1"
+        run: bash build/build_macos.sh
+
+      - name: Paketle (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./build/build_windows.ps1
+
+      - name: Çalışıyor mu?
+        if: runner.os != 'macOS'
+        run: ${{ matrix.path }} --version
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.path }}
+          if-no-files-found: error

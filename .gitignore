@@ -1,0 +1,10 @@
+# Paketleme çıktıları
+build/.venv/
+build/bin/
+build/VideoSikistirici/
+dist/
+*.spec
+
+# Python
+__pycache__/
+*.py[cod]
