@@ -1185,6 +1185,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if sys.stderr is None:
         sys.stderr = open(os.devnull, "w", encoding="utf-8")
 
+    # Windows konsolu cp1252 kullanır; Türkçe çıktı UnicodeEncodeError vermesin.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
     args = build_parser().parse_args(argv)
     if args.no_gui:
         return run_cli(args)

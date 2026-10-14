@@ -14,11 +14,12 @@ varlığı denetlenir. Bu denetim geçmezse paketleme yapılmaz — çünkü o i
 uygulama çalışmaz.
 
 Kaynaklar:
-  Windows : BtbN/FFmpeg-Builds (GPL, libx264 dahil)
-  Linux   : johnvansickle.com statik derlemeleri — BtbN'in yarısı boyutunda
-            (her kodeği değil gerekenleri içerir) ve eski glibc tabanıyla
-            derlendiği için eski dağıtımlarda da çalışır
-  macOS   : eugeneware/ffmpeg-static (darwin-arm64 / darwin-x64)
+  Linux           : johnvansickle.com statik derlemeleri — eski glibc tabanıyla
+                    derlendiği için eski dağıtımlarda da çalışır
+  Windows / macOS : eugeneware/ffmpeg-static (win32-x64, darwin-arm64/x64)
+
+Her üçü de BtbN'in "her kodeği içeren" derlemesinden belirgin küçüktür; sonuç
+dosyası 146 MB yerine ~70 MB oluyor.
 """
 from __future__ import annotations
 
@@ -33,12 +34,19 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
+# Windows konsolu varsayılan olarak cp1252 kullanır; "İndiriliyor" gibi
+# Türkçe metinler UnicodeEncodeError ile çökerdi.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 IS_WIN = os.name == "nt"
 IS_MAC = sys.platform == "darwin"
 ARM = platform.machine().lower() in ("arm64", "aarch64")
 NAMES = ("ffmpeg.exe", "ffprobe.exe") if IS_WIN else ("ffmpeg", "ffprobe")
 
-BTBN = "https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/"
 STATIC = "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/"
 JVS = "https://johnvansickle.com/ffmpeg/releases/"
 
@@ -55,14 +63,9 @@ def download(url: str, dest: Path) -> None:
 
 
 def fetch_archive(target: Path) -> None:
-    """Windows ve Linux: tek arşivden iki ikiliyi çıkar."""
-    if IS_WIN:
-        if ARM:
-            raise SystemExit("Windows ARM64 için hazır derleme yok; ikilileri elle koyun.")
-        url = BTBN + "ffmpeg-master-latest-win64-gpl.zip"
-    else:
-        url = JVS + ("ffmpeg-release-arm64-static.tar.xz" if ARM
-                     else "ffmpeg-release-amd64-static.tar.xz")
+    """Linux: tek arşivden iki ikiliyi çıkar."""
+    url = JVS + ("ffmpeg-release-arm64-static.tar.xz" if ARM
+                 else "ffmpeg-release-amd64-static.tar.xz")
 
     with tempfile.TemporaryDirectory() as tmp:
         archive = Path(tmp) / Path(url).name
@@ -89,14 +92,27 @@ def fetch_archive(target: Path) -> None:
             raise SystemExit("Arşivde ffmpeg/ffprobe bulunamadı.")
 
 
-def fetch_macos(target: Path) -> None:
-    """macOS: mimariye uygun tek tek ikililer."""
-    arch = "arm64" if ARM else "x64"
+def fetch_binaries(target: Path) -> None:
+    """Windows ve macOS: platforma uygun tek tek ikililer."""
+    if IS_WIN:
+        if ARM:
+            raise SystemExit("Windows ARM64 için hazır derleme yok; ikilileri elle koyun.")
+        tag = "win32-x64"
+    else:
+        tag = "darwin-arm64" if ARM else "darwin-x64"
+
     for name in NAMES:
-        download(f"{STATIC}{name}-darwin-{arch}", target / name)
-    # İnternetten inen dosyalar karantinaya alınır; paketlemeden önce temizle.
-    subprocess.run(["xattr", "-dr", "com.apple.quarantine", str(target)],
-                   capture_output=True)
+        # Yayındaki dosya adlarında .exe yoktur: ffmpeg-win32-x64
+        stem = name[:-4] if name.endswith(".exe") else name
+        download(f"{STATIC}{stem}-{tag}", target / name)
+
+    if IS_MAC:
+        # İnternetten inen dosyalar karantinaya alınır; paketlemeden önce temizle.
+        try:
+            subprocess.run(["xattr", "-dr", "com.apple.quarantine", str(target)],
+                           capture_output=True)
+        except OSError:
+            pass  # xattr yoksa paketleme yine de sürsün
 
 
 def from_env(target: Path) -> bool:
@@ -151,7 +167,7 @@ def main() -> int:
     if all((target / name).is_file() for name in NAMES):
         log(f"Mevcut ikililer kullanılıyor → {target}")
     elif not from_env(target):
-        (fetch_macos if IS_MAC else fetch_archive)(target)
+        (fetch_archive if (not IS_WIN and not IS_MAC) else fetch_binaries)(target)
 
     verify(target)
     log(f"Hazır → {target}")

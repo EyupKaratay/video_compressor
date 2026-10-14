@@ -210,8 +210,11 @@ ffmpeg kaynakları platforma göre seçilir:
 | Platform | Kaynak | Not |
 |---|---|---|
 | Linux | johnvansickle.com statik | Eski glibc tabanı → eski dağıtımlarda da çalışır |
-| Windows | BtbN/FFmpeg-Builds (GPL) | |
-| macOS | eugeneware/ffmpeg-static | arm64 ve x64 ayrı |
+| Windows | eugeneware/ffmpeg-static | `win32-x64` |
+| macOS | eugeneware/ffmpeg-static | `darwin-arm64` ve `darwin-x64` ayrı |
+
+BtbN derlemeleri bilerek kullanılmıyor: her kodeği (x265, AV1, VP9…) içerdiği
+için paketi iki katına çıkarıyordu.
 
 **Ölçülen sonuç (Linux x64):** `dist/VideoSikistirici` = **69 MB**, açılış süresi
 1,2 sn (tek dosya her çalıştırmada kendini geçici klasöre açar).
